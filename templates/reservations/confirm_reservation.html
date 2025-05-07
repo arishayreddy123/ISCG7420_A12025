@@ -5,14 +5,18 @@
   <p><strong>Room:</strong> {{ room.name }}</p>
   <p><strong>Capacity:</strong> {{ room.capacity }}</p>
   <p><strong>Description:</strong> {{ room.description }}</p>
-  <p><strong>When:</strong> {{ start|date:"F j, Y H:i" }} – {{ end|date:"H:i" }}</p>
+  <p>
+    <strong>When:</strong>
+    {{ start|date:"F j, Y" }} from {{ start|date:"H:i" }}
+    to {{ end|date:"H:i" }}
+  </p>
 
   <form method="post" action="{% url 'reservations:make_reservation' room.id %}">
     {% csrf_token %}
-    <input type="hidden" name="start_time" value="{{ start }}">
-    <input type="hidden" name="end_time"   value="{{ end }}">
+    <input type="hidden" name="start_time" value="{{ start|date:'Y-m-d\\TH:i' }}">
+    <input type="hidden" name="end_time"   value="{{ end|date:'Y-m-d\\TH:i' }}">
     <button type="submit">Confirm Booking</button>
-    <a href="{% url 'reservations:room_status' %}?date={{ start|slice:":10" }}">Cancel</a>
+    <a href="{% url 'reservations:room_status' %}?date={{ start|date:'Y-m-d' }}">Cancel</a>
   </form>
 </div>
 {% endblock %}
