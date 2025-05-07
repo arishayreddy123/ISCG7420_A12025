@@ -3,16 +3,9 @@
 <div class="container">
   <h1>Availability for {{ date|date:"F j, Y" }}</h1>
 
-  <!-- Date picker -->
   <form method="get" style="margin-bottom:1em;">
     <label for="date">Select date:</label>
-    <input
-      type="date"
-      id="date"
-      name="date"
-      value="{{ date_str }}"
-      min="{{ min_date }}"
-    />
+    <input type="date" id="date" name="date" value="{{ date_str }}" min="{{ min_date }}">
     <button type="submit">Go</button>
   </form>
 
@@ -32,7 +25,7 @@
           {% for cell in row.cells %}
             <td>
               {% if cell.free %}
-                <a href="{% url 'reservations:make_reservation' row.room.id %}?start_time={{ cell.start|date:'Y-m-d\\TH:i' }}&end_time={{ cell.end|date:'Y-m-d\\TH:i' }}">
+                <a href="{% url 'reservations:confirm_reservation' row.room.id %}?start_time={{ cell.start|date:'Y-m-d\\TH:i' }}&end_time={{ cell.end|date:'Y-m-d\\TH:i' }}">
                   Book
                 </a>
               {% else %}
