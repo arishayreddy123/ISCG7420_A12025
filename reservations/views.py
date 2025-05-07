@@ -1,4 +1,5 @@
 from datetime import datetime, time, timedelta
+from django import forms
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -113,16 +114,61 @@ def my_reservations(request):
 @login_required
 def edit_reservation(request, res_id):
     res = get_object_or_404(Reservation, pk=res_id, user=request.user)
+    room = res.room
+
+    min_date = timezone.localdate()
+    date_str = request.GET.get('date', res.start_time.date().isoformat())
+    try:
+        chosen_date = datetime.fromisoformat(date_str).date()
+    except ValueError:
+        chosen_date = res.start_time.date()
+
+    slots = []
+    for hour in range(9, 17):
+        dt = datetime.combine(chosen_date, time(hour, 0))
+        start = timezone.make_aware(dt)
+        end = start + timedelta(hours=1)
+        if not (start == res.start_time and end == res.end_time):
+            conflict = Reservation.objects.filter(
+                room=room,
+                start_time__lt=end,
+                end_time__gt=start
+            ).exists()
+            if not conflict:
+                slots.append({'start': start, 'end': end})
+
+    class EditForm(forms.Form):
+        date      = forms.DateField(
+                        initial=chosen_date,
+                        widget=forms.DateInput(attrs={'type':'date','min':min_date.isoformat()})
+                    )
+        time_slot = forms.ChoiceField(
+                        choices=[(
+                            f"{s['start'].isoformat()}|{s['end'].isoformat()}",
+                            f"{s['start'].strftime('%H:%M')}–{s['end'].strftime('%H:%M')}"
+                          ) for s in slots] or [('', 'No slots available')]
+                    )
+
     if request.method == 'POST':
-        form = ReservationForm(request.POST, instance=res)
+        form = EditForm(request.POST)
         if form.is_valid():
-            form.save()
+            val = form.cleaned_data['time_slot']
+            if val:
+                start_iso, end_iso = val.split('|')
+                res.start_time = timezone.make_aware(datetime.fromisoformat(start_iso))
+                res.end_time   = timezone.make_aware(datetime.fromisoformat(end_iso))
+                res.save()
+                messages.success(request, "Reservation updated")
+            else:
+                messages.error(request, "No slot selected")
             return redirect('reservations:my_reservations')
     else:
-        form = ReservationForm(instance=res)
-    return render(request, 'reservations/reservation_form.html', {
+        form = EditForm()
+
+    return render(request, 'reservations/edit_reservation.html', {
+        'room': room,
+        'res': res,
         'form': form,
-        'room': res.room
     })
 
 @login_required
