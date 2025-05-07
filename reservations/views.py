@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.core.mail import send_mail
+from django.contrib.auth import login
 from .models import Room, Reservation
-from .forms import ReservationForm
+from .forms import ReservationForm, RegistrationForm
 
 @login_required
 def room_status(request):
@@ -70,3 +71,17 @@ def cancel_reservation(request, res_id):
         res.delete()
         return redirect('reservations:my_reservations')
     return render(request, 'reservations/confirm_cancel.html', {'reservation': res})
+
+def home(request):
+    return render(request, 'home.html')
+
+def register(request):
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('reservations:room_status')
+    else:
+        form = RegistrationForm()
+    return render(request, 'registration/register.html', {'form': form})

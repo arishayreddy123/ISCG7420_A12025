@@ -1,10 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="utf-8">
+  <title>Conference Booking</title>
 </head>
 <body>
-
+  <nav>
+    <a href="{% url 'home' %}">Home</a> |
+    {% if user.is_authenticated %}
+      Hello, {{ user.username }} |
+      <a href="{% url 'reservations:room_status' %}">Rooms</a> |
+      <a href="{% url 'reservations:my_reservations' %}">My Bookings</a> |
+      <a href="{% url 'logout' %}">Logout</a>
+    {% else %}
+      <a href="{% url 'login' %}">Login</a> |
+      <a href="{% url 'register' %}">Register</a>
+    {% endif %}
+  </nav>
+  <hr>
+  {% block content %}{% endblock %}
 </body>
 </html>
