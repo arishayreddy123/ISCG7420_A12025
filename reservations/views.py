@@ -59,8 +59,15 @@ def confirm_reservation(request, room_id):
     end_iso   = request.GET.get('end_time')
     if not start_iso or not end_iso:
         return redirect('reservations:room_status')
-    start_dt = timezone.make_aware(datetime.fromisoformat(start_iso))
-    end_dt   = timezone.make_aware(datetime.fromisoformat(end_iso))
+
+    # parse ISO; fromisoformat on offset gives aware, so only make_aware if naive
+    start_dt = datetime.fromisoformat(start_iso)
+    if start_dt.tzinfo is None:
+        start_dt = timezone.make_aware(start_dt)
+    end_dt = datetime.fromisoformat(end_iso)
+    if end_dt.tzinfo is None:
+        end_dt = timezone.make_aware(end_dt)
+
     return render(request, 'reservations/confirm_reservation.html', {
         'room': room,
         'start': start_dt,
@@ -155,8 +162,10 @@ def edit_reservation(request, res_id):
             val = form.cleaned_data['time_slot']
             if val:
                 start_iso, end_iso = val.split('|')
-                res.start_time = timezone.make_aware(datetime.fromisoformat(start_iso))
-                res.end_time   = timezone.make_aware(datetime.fromisoformat(end_iso))
+                new_start = datetime.fromisoformat(start_iso)
+                new_end   = datetime.fromisoformat(end_iso)
+                res.start_time = new_start if new_start.tzinfo else timezone.make_aware(new_start)
+                res.end_time   = new_end   if new_end.tzinfo   else timezone.make_aware(new_end)
                 res.save()
                 messages.success(request, "Reservation updated")
             else:
