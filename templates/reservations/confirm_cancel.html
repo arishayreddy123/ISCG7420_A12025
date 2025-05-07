@@ -1,10 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h1>Cancel Reservation</h1>
+  <p>Are you sure you want to cancel your reservation for <strong>{{ reservation.room.name }}</strong> on <strong>{{ reservation.start_time|date:"F j, Y H:i" }}</strong>?</p>
+  <form method="post" style="display:inline">
+    {% csrf_token %}
+    <button type="submit">Yes, cancel</button>
+  </form>
+  <a href="{% url 'reservations:my_reservations' %}">No, go back</a>
+</div>
+{% endblock %}
