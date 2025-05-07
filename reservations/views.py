@@ -7,9 +7,9 @@ from django.contrib.auth import login
 from .models import Room, Reservation
 from .forms import ReservationForm, RegistrationForm
 
+# availability grid with date picker
 @login_required
 def room_status(request):
-    # parse date from query (YYYY‑MM‑DD) or default to today
     min_date = timezone.localdate()
     date_str = request.GET.get('date', min_date.isoformat())
     try:
@@ -17,18 +17,16 @@ def room_status(request):
     except ValueError:
         chosen_date = min_date
 
-    # build hourly slots 09:00–17:00
     slots = []
     for hour in range(9, 17):
         dt = datetime.combine(chosen_date, time(hour, 0))
-        start_aware = timezone.make_aware(dt)
-        end_aware = start_aware + timedelta(hours=1)
-        slots.append({'start': start_aware, 'end': end_aware})
+        start = timezone.make_aware(dt)
+        end = start + timedelta(hours=1)
+        slots.append({'start': start, 'end': end})
 
     rooms = Room.objects.all()
     todays = Reservation.objects.filter(start_time__date=chosen_date)
 
-    # build grid rows
     grid = []
     for room in rooms:
         row = {'room': room, 'cells': []}
@@ -53,55 +51,61 @@ def room_status(request):
         'grid': grid,
     })
 
+# show confirmation details
+@login_required
+def confirm_reservation(request, room_id):
+    room = get_object_or_404(Room, pk=room_id)
+    start = request.GET.get('start_time')
+    end   = request.GET.get('end_time')
+    if not start or not end:
+        return redirect('reservations:room_status')
+    return render(request, 'reservations/confirm_reservation.html', {
+        'room': room,
+        'start': start,
+        'end': end,
+    })
+
+# handle actual booking (POST from confirm page)
 @login_required
 def make_reservation(request, room_id):
     room = get_object_or_404(Room, pk=room_id)
-    if request.method == 'POST':
-        form = ReservationForm(request.POST)
-        if form.is_valid():
-            res = form.save(commit=False)
-            res.user = request.user
-            res.room = room
-            # conflict check
-            if Reservation.objects.filter(
-                    room=room,
-                    start_time__lt=res.end_time,
-                    end_time__gt=res.start_time
-               ).exists():
-                form.add_error(None, "Time slot conflict.")
-            else:
-                res.save()
-                send_mail(
-                  'Booking Confirmed',
-                  f'Your booking of {room.name} at {res.start_time} is confirmed.',
-                  'noreply@unitec.ac.nz',
-                  [request.user.email],
-                )
-                return redirect('reservations:my_reservations')
-    else:
-        start = request.GET.get('start_time')
-        end   = request.GET.get('end_time')
-        if start and end:
-            initial = {'start_time': start, 'end_time': end}
+    if request.method != 'POST':
+        return redirect('reservations:room_status')
+
+    form = ReservationForm(request.POST)
+    if form.is_valid():
+        res = form.save(commit=False)
+        res.user = request.user
+        res.room = room
+        if Reservation.objects.filter(
+            room=room,
+            start_time__lt=res.end_time,
+            end_time__gt=res.start_time
+        ).exists():
+            form.add_error(None, "Time slot conflict.")
         else:
-            now = timezone.now()
-            initial = {'start_time': now, 'end_time': now + timedelta(hours=1)}
-        form = ReservationForm(initial=initial)
+            res.save()
+            send_mail(
+              'Booking Confirmed',
+              f'Your booking of {room.name} at {res.start_time} is confirmed.',
+              'noreply@unitec.ac.nz',
+              [request.user.email],
+            )
+            return redirect('reservations:my_reservations')
 
     return render(request, 'reservations/reservation_form.html', {
         'form': form,
         'room': room
     })
 
+# rest of your views unchanged
 @login_required
 def my_reservations(request):
     upcoming = Reservation.objects.filter(
         user=request.user,
         end_time__gte=timezone.now()
     ).order_by('start_time')
-    return render(request, 'reservations/my_reservations.html', {
-        'reservations': upcoming
-    })
+    return render(request, 'reservations/my_reservations.html', {'reservations': upcoming})
 
 @login_required
 def edit_reservation(request, res_id):
@@ -113,10 +117,7 @@ def edit_reservation(request, res_id):
             return redirect('reservations:my_reservations')
     else:
         form = ReservationForm(instance=res)
-    return render(request, 'reservations/reservation_form.html', {
-        'form': form,
-        'room': res.room
-    })
+    return render(request, 'reservations/reservation_form.html', {'form': form, 'room': res.room})
 
 @login_required
 def cancel_reservation(request, res_id):
@@ -124,9 +125,7 @@ def cancel_reservation(request, res_id):
     if request.method == 'POST':
         res.delete()
         return redirect('reservations:my_reservations')
-    return render(request, 'reservations/confirm_cancel.html', {
-        'reservation': res
-    })
+    return render(request, 'reservations/confirm_cancel.html', {'reservation': res})
 
 def home(request):
     return render(request, 'home.html')
