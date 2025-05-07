@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h1>Availability for {{ date|date:"F j, Y" }}</h1>
+
+  <!-- Date picker -->
+  <form method="get" style="margin-bottom:1em;">
+    <label for="date">Select date:</label>
+    <input
+      type="date"
+      id="date"
+      name="date"
+      value="{{ date_str }}"
+      min="{{ min_date }}"
+    />
+    <button type="submit">Go</button>
+  </form>
+
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Room</th>
+        {% for slot in slots %}
+          <th>{{ slot.start|date:"H:i" }}–{{ slot.end|date:"H:i" }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in grid %}
+        <tr>
+          <td>{{ row.room.name }}</td>
+          {% for cell in row.cells %}
+            <td>
+              {% if cell.free %}
+                <a href="{% url 'reservations:make_reservation' row.room.id %}?start_time={{ cell.start|date:'Y-m-d\\TH:i' }}&end_time={{ cell.end|date:'Y-m-d\\TH:i' }}">
+                  Book
+                </a>
+              {% else %}
+                Booked
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
