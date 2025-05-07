@@ -7,7 +7,6 @@ from django.contrib.auth import login
 from .models import Room, Reservation
 from .forms import ReservationForm, RegistrationForm
 
-# availability grid with date picker
 @login_required
 def room_status(request):
     min_date = timezone.localdate()
@@ -51,21 +50,24 @@ def room_status(request):
         'grid': grid,
     })
 
-# show confirmation details
 @login_required
 def confirm_reservation(request, room_id):
     room = get_object_or_404(Room, pk=room_id)
-    start = request.GET.get('start_time')
-    end   = request.GET.get('end_time')
-    if not start or not end:
+    start_iso = request.GET.get('start_time')
+    end_iso   = request.GET.get('end_time')
+    if not start_iso or not end_iso:
         return redirect('reservations:room_status')
+
+    # parse ISO strings into datetimes and make them timezone-aware
+    start_dt = timezone.make_aware(datetime.fromisoformat(start_iso))
+    end_dt   = timezone.make_aware(datetime.fromisoformat(end_iso))
+
     return render(request, 'reservations/confirm_reservation.html', {
         'room': room,
-        'start': start,
-        'end': end,
+        'start': start_dt,
+        'end': end_dt,
     })
 
-# handle actual booking (POST from confirm page)
 @login_required
 def make_reservation(request, room_id):
     room = get_object_or_404(Room, pk=room_id)
@@ -98,14 +100,15 @@ def make_reservation(request, room_id):
         'room': room
     })
 
-# rest of your views unchanged
 @login_required
 def my_reservations(request):
     upcoming = Reservation.objects.filter(
         user=request.user,
         end_time__gte=timezone.now()
     ).order_by('start_time')
-    return render(request, 'reservations/my_reservations.html', {'reservations': upcoming})
+    return render(request, 'reservations/my_reservations.html', {
+        'reservations': upcoming
+    })
 
 @login_required
 def edit_reservation(request, res_id):
@@ -117,7 +120,10 @@ def edit_reservation(request, res_id):
             return redirect('reservations:my_reservations')
     else:
         form = ReservationForm(instance=res)
-    return render(request, 'reservations/reservation_form.html', {'form': form, 'room': res.room})
+    return render(request, 'reservations/reservation_form.html', {
+        'form': form,
+        'room': res.room
+    })
 
 @login_required
 def cancel_reservation(request, res_id):
@@ -125,7 +131,9 @@ def cancel_reservation(request, res_id):
     if request.method == 'POST':
         res.delete()
         return redirect('reservations:my_reservations')
-    return render(request, 'reservations/confirm_cancel.html', {'reservation': res})
+    return render(request, 'reservations/confirm_cancel.html', {
+        'reservation': res
+    })
 
 def home(request):
     return render(request, 'home.html')
