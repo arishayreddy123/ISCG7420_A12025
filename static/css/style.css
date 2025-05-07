@@ -1,15 +1,103 @@
+/* Base page styling */
 body {
   font-family: Arial, sans-serif;
   margin: 20px;
-}
-nav a {
-  margin-right: 10px;
-  text-decoration: none;
-}
-h1, h2 {
+  line-height: 1.6;
+  background-color: #f9f9f9;
   color: #333;
 }
-.error {
-  color: red;
+
+/* Headings */
+h1, h2 {
+  color: #222;
+  margin-bottom: 0.5em;
 }
 
+/* Links */
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Navbar layout */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 10px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+}
+
+nav li {
+  margin-right: 15px;
+}
+
+nav li:last-child {
+  margin-right: 0;
+}
+
+nav a {
+  color: #007bff;
+  font-weight: 500;
+}
+
+/* Buttons */
+button {
+  cursor: pointer;
+  padding: 6px 12px;
+  border: 1px solid #007bff;
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 1em;
+}
+button:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* Forms */
+form {
+  margin: 20px 0;
+}
+form input,
+form select,
+form textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 4px 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Reservation lists */
+ul {
+  padding-left: 0;
+}
+li {
+  list-style: none;
+  margin-bottom: 8px;
+}
+
+/* Error messages */
+.error {
+  color: red;
+  margin-top: 10px;
+}
+
+/* Container */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
