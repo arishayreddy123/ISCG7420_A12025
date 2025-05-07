@@ -1,3 +1,4 @@
+from datetime import datetime, time, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -8,8 +9,49 @@ from .forms import ReservationForm, RegistrationForm
 
 @login_required
 def room_status(request):
+    # parse date from query (YYYY‑MM‑DD) or default to today
+    min_date = timezone.localdate()
+    date_str = request.GET.get('date', min_date.isoformat())
+    try:
+        chosen_date = datetime.fromisoformat(date_str).date()
+    except ValueError:
+        chosen_date = min_date
+
+    # build hourly slots 09:00–17:00
+    slots = []
+    for hour in range(9, 17):
+        dt = datetime.combine(chosen_date, time(hour, 0))
+        start_aware = timezone.make_aware(dt)
+        end_aware = start_aware + timedelta(hours=1)
+        slots.append({'start': start_aware, 'end': end_aware})
+
     rooms = Room.objects.all()
-    return render(request, 'reservations/room_status.html', {'rooms': rooms})
+    todays = Reservation.objects.filter(start_time__date=chosen_date)
+
+    # build grid rows
+    grid = []
+    for room in rooms:
+        row = {'room': room, 'cells': []}
+        for slot in slots:
+            conflict = todays.filter(
+                room=room,
+                start_time__lt=slot['end'],
+                end_time__gt=slot['start']
+            ).exists()
+            row['cells'].append({
+                'start': slot['start'],
+                'end': slot['end'],
+                'free': not conflict
+            })
+        grid.append(row)
+
+    return render(request, 'reservations/room_grid.html', {
+        'date': chosen_date,
+        'date_str': chosen_date.isoformat(),
+        'min_date': min_date.isoformat(),
+        'slots': slots,
+        'grid': grid,
+    })
 
 @login_required
 def make_reservation(request, room_id):
@@ -29,7 +71,6 @@ def make_reservation(request, room_id):
                 form.add_error(None, "Time slot conflict.")
             else:
                 res.save()
-                # send confirmation email
                 send_mail(
                   'Booking Confirmed',
                   f'Your booking of {room.name} at {res.start_time} is confirmed.',
@@ -38,11 +79,19 @@ def make_reservation(request, room_id):
                 )
                 return redirect('reservations:my_reservations')
     else:
-        form = ReservationForm(initial={
-            'start_time': timezone.now(),
-            'end_time': timezone.now()
-        })
-    return render(request, 'reservations/reservation_form.html', {'form': form, 'room': room})
+        start = request.GET.get('start_time')
+        end   = request.GET.get('end_time')
+        if start and end:
+            initial = {'start_time': start, 'end_time': end}
+        else:
+            now = timezone.now()
+            initial = {'start_time': now, 'end_time': now + timedelta(hours=1)}
+        form = ReservationForm(initial=initial)
+
+    return render(request, 'reservations/reservation_form.html', {
+        'form': form,
+        'room': room
+    })
 
 @login_required
 def my_reservations(request):
@@ -50,7 +99,9 @@ def my_reservations(request):
         user=request.user,
         end_time__gte=timezone.now()
     ).order_by('start_time')
-    return render(request, 'reservations/my_reservations.html', {'reservations': upcoming})
+    return render(request, 'reservations/my_reservations.html', {
+        'reservations': upcoming
+    })
 
 @login_required
 def edit_reservation(request, res_id):
@@ -62,7 +113,10 @@ def edit_reservation(request, res_id):
             return redirect('reservations:my_reservations')
     else:
         form = ReservationForm(instance=res)
-    return render(request, 'reservations/reservation_form.html', {'form': form, 'room': res.room})
+    return render(request, 'reservations/reservation_form.html', {
+        'form': form,
+        'room': res.room
+    })
 
 @login_required
 def cancel_reservation(request, res_id):
@@ -70,7 +124,9 @@ def cancel_reservation(request, res_id):
     if request.method == 'POST':
         res.delete()
         return redirect('reservations:my_reservations')
-    return render(request, 'reservations/confirm_cancel.html', {'reservation': res})
+    return render(request, 'reservations/confirm_cancel.html', {
+        'reservation': res
+    })
 
 def home(request):
     return render(request, 'home.html')
