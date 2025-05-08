@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Edit Reservation</h1>
+
+  <p><strong>Room:</strong> {{ room.name }}</p>
+  <p><strong>Capacity:</strong> {{ room.capacity }}</p>
+  <p><strong>Description:</strong> {{ room.description }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div>
+      <label>Date:</label><br>
+      {{ form.date }}
+      {% if form.date.errors %}
+        <div class="error">{{ form.date.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div>
+      <label>Time slot:</label><br>
+      {{ form.time_slot }}
+      {% if form.time_slot.errors %}
+        <div class="error">{{ form.time_slot.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit">Save</button>
+    <a href="{% url 'reservations:my_reservations' %}">Cancel</a>
+  </form>
+{% endblock %}
