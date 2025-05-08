@@ -1,30 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Edit Reservation</h1>
+  <h1>Edit Reservation for {{ room.name }}</h1>
 
-  <p><strong>Room:</strong> {{ room.name }}</p>
-  <p><strong>Capacity:</strong> {{ room.capacity }}</p>
-  <p><strong>Description:</strong> {{ room.description }}</p>
+  <!-- Date picker to reload slots -->
+  <form method="get" style="margin-bottom:1em">
+    <label for="id_date">Choose date:</label>
+    <input
+      type="date"
+      id="id_date"
+      name="date"
+      value="{{ chosen_date|date:'Y-m-d' }}"
+      min="{{ min_date }}"
+    >
+    <button type="submit">Show Slots</button>
+  </form>
 
+  <!-- Slot selection form -->
   <form method="post">
     {% csrf_token %}
-
     <div>
-      <label>Date:</label><br>
-      {{ form.date }}
-      {% if form.date.errors %}
-        <div class="error">{{ form.date.errors }}</div>
-      {% endif %}
-    </div>
-
-    <div>
-      <label>Time slot:</label><br>
+      <label for="{{ form.time_slot.id_for_label }}">
+        Time slot on {{ chosen_date|date:"M j, Y" }}:
+      </label><br>
       {{ form.time_slot }}
       {% if form.time_slot.errors %}
         <div class="error">{{ form.time_slot.errors }}</div>
       {% endif %}
     </div>
-
     <button type="submit">Save</button>
     <a href="{% url 'reservations:my_reservations' %}">Cancel</a>
   </form>
