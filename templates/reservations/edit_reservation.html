@@ -2,7 +2,7 @@
 {% block content %}
   <h1>Edit Reservation for {{ room.name }}</h1>
 
-  <!-- Date picker to reload slots -->
+  <!-- date picker GET -->
   <form method="get" style="margin-bottom:1em">
     <label for="id_date">Choose date:</label>
     <input
@@ -15,13 +15,11 @@
     <button type="submit">Show Slots</button>
   </form>
 
-  <!-- Slot selection form -->
+  <!-- time slot POST -->
   <form method="post">
     {% csrf_token %}
     <div>
-      <label for="{{ form.time_slot.id_for_label }}">
-        Time slot on {{ chosen_date|date:"M j, Y" }}:
-      </label><br>
+      <label>Time slot on {{ chosen_date|date:"M j, Y" }}:</label><br>
       {{ form.time_slot }}
       {% if form.time_slot.errors %}
         <div class="error">{{ form.time_slot.errors }}</div>

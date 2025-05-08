@@ -1,10 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<h1>My Reservations</h1>
+{% if reservations %}
+  <table>
+    <thead>
+      <tr>
+        <th>Room</th><th>When</th><th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for res in reservations %}
+        <tr>
+          <td>{{ res.room.name }}</td>
+          <td>{{ res.start_time|date:"M j, Y H:i" }}–{{ res.end_time|date:"H:i" }}</td>
+          <td>
+            <a href="{% url 'reservations:reservation_detail' res.id %}">View</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>You have no reservations.</p>
+{% endif %}
+{% endblock %}

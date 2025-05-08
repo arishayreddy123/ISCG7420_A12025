@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h1>Reservation Details</h1>
+  <p><strong>Room:</strong> {{ res.room.name }}</p>
+  <p><strong>When:</strong>
+     {{ res.start_time|date:"M j, Y H:i" }}
+     – {{ res.end_time|date:"H:i" }}
+  </p>
+  <p>
+    <a href="{% url 'reservations:edit_reservation' res.id %}">Edit</a>
+    |
+    <a href="{% url 'reservations:cancel_reservation' res.id %}">Cancel</a>
+    |
+    <a href="{% url 'reservations:my_reservations' %}">Back to My Reservations</a>
+  </p>
+</div>
+{% endblock %}

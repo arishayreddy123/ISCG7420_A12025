@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>All Reservations</h1>
+<a href="{% url 'reservations:admin_reservation_add' %}">New</a>
+<table>
+  <tr><th>User</th><th>Room</th><th>When</th><th></th></tr>
+  {% for r in reservations %}
+    <tr>
+      <td>{{ r.user.username }}</td>
+      <td>{{ r.room.name }}</td>
+      <td>{{ r.start_time }}–{{ r.end_time }}</td>
+      <td>
+        <a href="{% url 'reservations:admin_reservation_edit' r.pk %}">Edit</a>
+        <a href="{% url 'reservations:admin_reservation_delete' r.pk %}">Del</a>
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}

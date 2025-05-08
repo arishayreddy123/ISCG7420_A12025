@@ -1,13 +1,44 @@
 from datetime import datetime, time, timedelta
+
 from django import forms
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.utils import timezone
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.contrib.auth.models import User
 from django.contrib.auth import login
+
 from .models import Room, Reservation
-from .forms import ReservationForm, RegistrationForm
+from .forms import (
+    ReservationForm, RegistrationForm,
+    RoomForm, ReservationAdminForm, UserForm
+)
+
+
+def home(request):
+    return render(request, 'home.html')
+
+
+def register(request):
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            u = form.save(commit=False)
+            u.set_password(form.cleaned_data['password'])
+            u.save()
+            login(request, u)
+            return redirect('reservations:room_status')
+    else:
+        form = RegistrationForm()
+    return render(request, 'registration/register.html', {'form': form})
+
+
+@login_required
+def room_list(request):
+    rooms = Room.objects.all()
+    return render(request, 'reservations/room_list.html', {'rooms': rooms})
+
 
 @login_required
 def room_status(request):
@@ -20,7 +51,7 @@ def room_status(request):
 
     slots = []
     for hour in range(9, 17):
-        dt = datetime.combine(chosen_date, time(hour, 0))
+        dt = datetime.combine(chosen_date, time(hour))
         start = timezone.make_aware(dt)
         end = start + timedelta(hours=1)
         slots.append({'start': start, 'end': end})
@@ -46,33 +77,30 @@ def room_status(request):
 
     return render(request, 'reservations/room_grid.html', {
         'date': chosen_date,
-        'date_str': chosen_date.isoformat(),
         'min_date': min_date.isoformat(),
-        'slots': slots,
         'grid': grid,
     })
+
 
 @login_required
 def confirm_reservation(request, room_id):
     room = get_object_or_404(Room, pk=room_id)
-    start_iso = request.GET.get('start_time')
-    end_iso   = request.GET.get('end_time')
+    start_iso = request.GET.get('start_time', '').replace(' ', '+')
+    end_iso = request.GET.get('end_time', '').replace(' ', '+')
     if not start_iso or not end_iso:
         return redirect('reservations:room_status')
 
-    # parse ISO; fromisoformat on offset gives aware, so only make_aware if naive
-    start_dt = datetime.fromisoformat(start_iso)
-    if start_dt.tzinfo is None:
-        start_dt = timezone.make_aware(start_dt)
-    end_dt = datetime.fromisoformat(end_iso)
-    if end_dt.tzinfo is None:
-        end_dt = timezone.make_aware(end_dt)
+    start_dt = datetime.fromisoformat(start_iso).replace(tzinfo=None)
+    start_dt = timezone.make_aware(start_dt)
+    end_dt = datetime.fromisoformat(end_iso).replace(tzinfo=None)
+    end_dt = timezone.make_aware(end_dt)
 
     return render(request, 'reservations/confirm_reservation.html', {
         'room': room,
         'start': start_dt,
-        'end': end_dt,
+        'end': end_dt
     })
+
 
 @login_required
 def make_reservation(request, room_id):
@@ -85,6 +113,7 @@ def make_reservation(request, room_id):
         res = form.save(commit=False)
         res.user = request.user
         res.room = room
+
         if Reservation.objects.filter(
             room=room,
             start_time__lt=res.end_time,
@@ -93,12 +122,6 @@ def make_reservation(request, room_id):
             form.add_error(None, "Time slot conflict.")
         else:
             res.save()
-            send_mail(
-              'Booking Confirmed',
-              f'Your booking of {room.name} at {res.start_time} is confirmed.',
-              'noreply@unitec.ac.nz',
-              [request.user.email],
-            )
             messages.success(request, "Successfully booked")
             return redirect('reservations:my_reservations')
 
@@ -107,78 +130,24 @@ def make_reservation(request, room_id):
         'room': room
     })
 
+
 @login_required
 def my_reservations(request):
-    today = timezone.localdate()
     upcoming = Reservation.objects.filter(
-        user=request.user,
-        start_time__date__gte=today
+        user=request.user
     ).order_by('start_time')
     return render(request, 'reservations/my_reservations.html', {
         'reservations': upcoming
     })
 
+
 @login_required
-def edit_reservation(request, res_id):
+def reservation_detail(request, res_id):
     res = get_object_or_404(Reservation, pk=res_id, user=request.user)
-    room = res.room
-
-    min_date = timezone.localdate()
-    date_str = request.GET.get('date', res.start_time.date().isoformat())
-    try:
-        chosen_date = datetime.fromisoformat(date_str).date()
-    except ValueError:
-        chosen_date = res.start_time.date()
-
-    slots = []
-    for hour in range(9, 17):
-        dt = datetime.combine(chosen_date, time(hour, 0))
-        start = timezone.make_aware(dt)
-        end = start + timedelta(hours=1)
-        if not (start == res.start_time and end == res.end_time):
-            conflict = Reservation.objects.filter(
-                room=room,
-                start_time__lt=end,
-                end_time__gt=start
-            ).exists()
-            if not conflict:
-                slots.append({'start': start, 'end': end})
-
-    class EditForm(forms.Form):
-        date      = forms.DateField(
-                        initial=chosen_date,
-                        widget=forms.DateInput(attrs={'type':'date','min':min_date.isoformat()})
-                    )
-        time_slot = forms.ChoiceField(
-                        choices=[(
-                            f"{s['start'].isoformat()}|{s['end'].isoformat()}",
-                            f"{s['start'].strftime('%H:%M')}–{s['end'].strftime('%H:%M')}"
-                          ) for s in slots] or [('', 'No slots available')]
-                    )
-
-    if request.method == 'POST':
-        form = EditForm(request.POST)
-        if form.is_valid():
-            val = form.cleaned_data['time_slot']
-            if val:
-                start_iso, end_iso = val.split('|')
-                new_start = datetime.fromisoformat(start_iso)
-                new_end   = datetime.fromisoformat(end_iso)
-                res.start_time = new_start if new_start.tzinfo else timezone.make_aware(new_start)
-                res.end_time   = new_end   if new_end.tzinfo   else timezone.make_aware(new_end)
-                res.save()
-                messages.success(request, "Reservation updated")
-            else:
-                messages.error(request, "No slot selected")
-            return redirect('reservations:my_reservations')
-    else:
-        form = EditForm()
-
-    return render(request, 'reservations/edit_reservation.html', {
-        'room': room,
-        'res': res,
-        'form': form,
+    return render(request, 'reservations/reservation_detail.html', {
+        'res': res
     })
+
 
 @login_required
 def cancel_reservation(request, res_id):
@@ -191,16 +160,154 @@ def cancel_reservation(request, res_id):
         'reservation': res
     })
 
-def home(request):
-    return render(request, 'home.html')
 
-def register(request):
-    if request.method == 'POST':
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('reservations:room_status')
+@login_required
+def edit_reservation(request, res_id):
+    res = get_object_or_404(Reservation, pk=res_id, user=request.user)
+    room = res.room
+
+    if 'date' in request.GET:
+        try:
+            chosen_date = datetime.fromisoformat(request.GET['date']).date()
+        except ValueError:
+            chosen_date = timezone.localdate()
     else:
-        form = RegistrationForm()
-    return render(request, 'registration/register.html', {'form': form})
+        chosen_date = timezone.localdate()
+
+    min_date = timezone.localdate()
+
+    slots = []
+    for hour in range(9, 17):
+        dt = datetime.combine(chosen_date, time(hour))
+        start = timezone.make_aware(dt)
+        end = start + timedelta(hours=1)
+        if start == res.start_time and end == res.end_time:
+            slots.append({'start': start, 'end': end})
+        else:
+            if not Reservation.objects.filter(
+                room=room,
+                start_time__lt=end,
+                end_time__gt=start
+            ).exists():
+                slots.append({'start': start, 'end': end})
+
+    class SlotForm(forms.Form):
+        time_slot = forms.ChoiceField(
+            choices=[
+                (f"{s['start'].isoformat()}|{s['end'].isoformat()}",
+                 f"{s['start'].strftime('%H:%M')}–{s['end'].strftime('%H:%M')}")
+                for s in slots
+            ] or [('', 'No slots available')]
+        )
+
+    if request.method == 'POST':
+        form = SlotForm(request.POST)
+        if form.is_valid():
+            val = form.cleaned_data['time_slot']
+            if val:
+                start_iso, end_iso = val.split('|')
+                new_start = timezone.make_aware(
+                    datetime.fromisoformat(start_iso).replace(tzinfo=None)
+                )
+                new_end = timezone.make_aware(
+                    datetime.fromisoformat(end_iso).replace(tzinfo=None)
+                )
+
+                conflict = Reservation.objects.filter(
+                    room=room,
+                    start_time__lt=new_end,
+                    end_time__gt=new_start
+                ).exclude(pk=res.pk).exists()
+
+                if conflict:
+                    messages.error(request, "That slot was just booked.")
+                else:
+                    res.start_time = new_start
+                    res.end_time = new_end
+                    res.save()
+                    messages.success(request, "Reservation updated")
+                    return redirect('reservations:my_reservations')
+            else:
+                messages.error(request, "No slot selected")
+    else:
+        form = SlotForm()
+
+    return render(request, 'reservations/edit_reservation.html', {
+        'room': room,
+        'res': res,
+        'form': form,
+        'chosen_date': chosen_date,
+        'min_date': min_date.isoformat(),
+    })
+
+
+# -- admin views below --
+
+@staff_member_required
+def admin_room_list(request):
+    rooms = Room.objects.all()
+    return render(request, 'reservations/admin_room_list.html', {'rooms': rooms})
+
+@staff_member_required
+def admin_room_edit(request, pk=None):
+    inst = Room.objects.get(pk=pk) if pk else None
+    form = RoomForm(request.POST or None, instance=inst)
+    if form.is_valid():
+        form.save()
+        return redirect('reservations:admin_room_list')
+    return render(request, 'reservations/admin_room_form.html', {'form': form})
+
+@staff_member_required
+def admin_room_delete(request, pk):
+    obj = get_object_or_404(Room, pk=pk)
+    if request.method=='POST':
+        obj.delete()
+        return redirect('reservations:admin_room_list')
+    return render(request,'reservations/admin_confirm_delete.html',{'obj':obj})
+
+@staff_member_required
+def admin_reservation_list(request):
+    rs = Reservation.objects.all().order_by('start_time')
+    return render(request,'reservations/admin_reservation_list.html',{'reservations':rs})
+
+@staff_member_required
+def admin_reservation_edit(request, pk=None):
+    inst = Reservation.objects.get(pk=pk) if pk else None
+    form = ReservationAdminForm(request.POST or None, instance=inst)
+    if form.is_valid():
+        form.save()
+        return redirect('reservations:admin_reservation_list')
+    return render(request,'reservations/admin_reservation_form.html',{'form':form})
+
+@staff_member_required
+def admin_reservation_delete(request, pk):
+    obj = get_object_or_404(Reservation, pk=pk)
+    if request.method=='POST':
+        obj.delete()
+        return redirect('reservations:admin_reservation_list')
+    return render(request,'reservations/admin_confirm_delete.html',{'obj':obj})
+
+@staff_member_required
+def admin_user_list(request):
+    us = User.objects.all()
+    return render(request,'reservations/admin_user_list.html',{'users':us})
+
+@staff_member_required
+def admin_user_edit(request, pk=None):
+    inst = User.objects.get(pk=pk) if pk else None
+    form = UserForm(request.POST or None, instance=inst)
+    if form.is_valid():
+        u = form.save(commit=False)
+        if form.cleaned_data['password']:
+            u.set_password(form.cleaned_data['password'])
+        u.save()
+        return redirect('reservations:admin_user_list')
+    return render(request,'reservations/admin_user_form.html',{'form':form})
+
+@staff_member_required
+def admin_user_delete(request, pk):
+    obj = get_object_or_404(User, pk=pk)
+    if request.method=='POST':
+        obj.delete()
+        return redirect('reservations:admin_user_list')
+    return render(request,'reservations/admin_confirm_delete.html',{'obj':obj})

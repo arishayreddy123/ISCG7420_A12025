@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Users</h1>
+<a href="{% url 'reservations:admin_user_add' %}">Add user</a>
+<table>
+  <tr><th>Username</th><th>Email</th><th></th></tr>
+  {% for u in users %}
+    <tr>
+      <td>{{ u.username }}</td><td>{{ u.email }}</td>
+      <td>
+        <a href="{% url 'reservations:admin_user_edit' u.pk %}">Edit</a>
+        <a href="{% url 'reservations:admin_user_delete' u.pk %}">Del</a>
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}
