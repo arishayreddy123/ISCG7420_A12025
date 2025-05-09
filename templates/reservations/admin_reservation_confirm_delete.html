@@ -1,9 +1,15 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Delete Reservation</h1>
-<p>Delete reservation for {{ reservation.room.name }}?</p>
-<form method="post">{% csrf_token %}
-  <button type="submit">Yes</button>
-  <a href="{% url 'reservations:admin_reservation_list' %}">No</a>
-</form>
+  <!-- delete reservation page -->
+  <h1>Delete Reservation</h1>
+  <!-- ask for confirmation -->
+  <p>Delete reservation for {{ reservation.room.name }}?</p>
+  <!-- form to confirm or cancel -->
+  <form method="post">
+    {% csrf_token %}
+    <!-- confirm deletion -->
+    <button class="btn btn-danger" type="submit">Yes</button>
+    <!-- cancel and go back -->
+    <a class="btn btn-secondary" href="{% url 'reservations:admin_reservation_list' %}">No</a>
+  </form>
 {% endblock %}

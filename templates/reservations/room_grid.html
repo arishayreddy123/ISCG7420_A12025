@@ -2,9 +2,13 @@
 {% block title %}Room Availability{% endblock %}
 
 {% block content %}
+  <!-- availability wrapper -->
   <div class="availability container">
+    <!-- controls: title and date filter -->
     <div class="controls">
+      <!-- page heading -->
       <h1>Room Availability</h1>
+      <!-- date picker form -->
       <form method="get">
         <label for="date">Date:</label>
         <input
@@ -18,11 +22,14 @@
       </form>
     </div>
 
+    <!-- card around the table -->
     <div class="card">
       <table>
         <thead>
           <tr>
+            <!-- room name column header -->
             <th>Room</th>
+            <!-- one column per time slot -->
             {% for slot in slots %}
               <th>{{ slot.0|time:"H:i" }}</th>
             {% endfor %}
@@ -31,15 +38,20 @@
         <tbody>
           {% for row in grid %}
             <tr>
+              <!-- room name cell -->
               <td class="room-name">{{ row.room.name }}</td>
               {% for cell in row.cells %}
                 {% if cell.free %}
+                  <!-- free slot with booking link -->
                   <td class="free">
-                    <a href="{% url 'reservations:confirm_reservation' row.room.pk %}?start_time={{ cell.start|date:'c' }}&end_time={{ cell.end|date:'c' }}">
+                    <a
+                      href="{% url 'reservations:confirm_reservation' row.room.pk %}?start_time={{ cell.start|date:'c' }}&end_time={{ cell.end|date:'c' }}"
+                    >
                       Book
                     </a>
                   </td>
                 {% else %}
+                  <!-- booked slot marker -->
                   <td class="booked">×</td>
                 {% endif %}
               {% endfor %}
@@ -49,6 +61,7 @@
       </table>
     </div>
 
+    <!-- legend explaining colors -->
     <div class="legend">
       <span><span class="box free-box"></span> Free</span>
       <span><span class="box booked-box"></span> Booked</span>

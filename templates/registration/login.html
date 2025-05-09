@@ -2,12 +2,19 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
+  <!-- login heading -->
   <h2>Login</h2>
+
+  <!-- login form -->
   <form method="post">
     {% csrf_token %}
+    <!-- render username/password fields -->
     {{ form.as_p }}
-    <button class="button primary" type="submit">Log In</button>
+    <!-- submit button -->
+    <button class="btn btn-primary" type="submit">Log In</button>
   </form>
+
+  <!-- link to registration -->
   <p>
     Don’t have an account?
     <a href="{% url 'reservations:register' %}">Register here</a>.

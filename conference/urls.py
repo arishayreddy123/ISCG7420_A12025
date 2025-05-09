@@ -6,7 +6,7 @@ from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    # redirect root “/” → reservations:home
+    # redirect root “/” to reservations:home
     path(
         "",
         RedirectView.as_view(pattern_name="reservations:home", permanent=False),
@@ -30,6 +30,6 @@ urlpatterns = [
       auth_views.LogoutView.as_view(next_page="reservations:home"),
       name="logout"
     ),
-    # include other auth endpoints (password change, reset) if desired
+
     path("accounts/", include("django.contrib.auth.urls")),
 ]

@@ -1,11 +1,24 @@
 {% extends "base.html" %}
 {% block title %}Confirm Delete User{% endblock %}
+
 {% block content %}
+  <!-- page heading -->
   <h2 class="title">Confirm delete user</h2>
-  <p>Are you sure you want to delete user “<strong>{{ obj.username }}</strong>”?</p>
+
+  <!-- ask for confirmation -->
+  <p>
+    Are you sure you want to delete user
+    “<strong>{{ obj.username }}</strong>”?
+  </p>
+
+  <!-- form to submit deletion -->
   <form method="post">
     {% csrf_token %}
-    <button class="button is-danger">Yes, delete</button>
-    <a class="button is-light" href="{% url 'reservations:admin_user_list' %}">No, go back</a>
+    <!-- confirm button -->
+    <button class="btn btn-danger" type="submit">Yes, delete</button>
+    <!-- cancel link -->
+    <a class="btn btn-secondary" href="{% url 'reservations:admin_user_list' %}">
+      No, go back
+    </a>
   </form>
 {% endblock %}

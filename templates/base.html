@@ -2,46 +2,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- page character set -->
   <meta charset="UTF-8">
+  <!-- responsive on mobile -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- page title, can be overridden -->
   <title>{% block title %}Conference Room Booking{% endblock %}</title>
+  <!-- link to main stylesheet -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-  <!-- NAVIGATION -->
+  <!-- top navigation bar -->
   <nav class="navbar">
+    <!-- link to home page -->
     <a href="{% url 'reservations:home' %}">Home</a>
+    <!-- link to list of rooms -->
     <a href="{% url 'reservations:room_list' %}">Rooms</a>
+    <!-- link to availability grid -->
     <a href="{% url 'reservations:room_status' %}">Book Room</a>
 
     {% if user.is_authenticated %}
-      <!-- personal reservations -->
+      <!-- link to user's own bookings -->
       <a href="{% url 'reservations:my_reservations' %}">My Reservations</a>
 
       {% if user.is_staff %}
-        <!-- admin management links -->
+        <!-- admin-only links -->
         <a href="{% url 'reservations:admin_room_list' %}">Manage Rooms</a>
         <a href="{% url 'reservations:admin_user_list' %}">Manage Users</a>
         <a href="{% url 'reservations:admin_reservation_list' %}">Manage Reservations</a>
       {% endif %}
 
-      <!-- logout as POST button -->
+      <!-- logout form to avoid 405 error -->
       <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left:1rem;">
         {% csrf_token %}
         <button type="submit" class="btn btn-secondary">Logout</button>
       </form>
     {% else %}
+      <!-- links for anonymous users -->
       <a href="{% url 'login' %}">Login</a>
       <a href="{% url 'reservations:register' %}">Register</a>
     {% endif %}
   </nav>
 
+  <!-- main content wrapper -->
   <div class="container">
+    <!-- flash messages -->
     {% if messages %}
       {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        <div class="alert alert-{{ message.tags }}">
+          {{ message }}
+        </div>
       {% endfor %}
     {% endif %}
+    <!-- page-specific content goes here -->
     {% block content %}{% endblock %}
   </div>
 </body>

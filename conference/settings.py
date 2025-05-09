@@ -34,7 +34,6 @@ ROOT_URLCONF = 'conference.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # include the top‑level templates/ so admin/index.html override works
         'DIRS': [ BASE_DIR / 'templates' ],
         'APP_DIRS': True,
         'OPTIONS': {

@@ -1,10 +1,17 @@
 {% extends "base.html" %}
+
 {% block content %}
+  <!-- confirmation heading -->
   <h1>Are you sure?</h1>
+  <!-- show room to delete -->
   <p>Delete room “{{ room.name }}”?</p>
+
+  <!-- form to confirm or cancel -->
   <form method="post">
     {% csrf_token %}
-    <button type="submit">Yes, delete</button>
-    <a href="{% url 'reservations:admin_room_list' %}">No, go back</a>
+    <!-- confirm delete button -->
+    <button class="btn btn-danger" type="submit">Yes, delete</button>
+    <!-- cancel and return to list -->
+    <a class="btn btn-secondary" href="{% url 'reservations:admin_room_list' %}">No, go back</a>
   </form>
 {% endblock %}

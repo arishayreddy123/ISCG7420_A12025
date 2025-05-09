@@ -3,13 +3,19 @@
 {% block title %}Conference Room Booking{% endblock %}
 
 {% block content %}
+  <!-- hero section with title and actions -->
   <section class="hero">
+    <!-- main heading -->
     <h1 class="hero-title">Conference Room Booking</h1>
+    <!-- subheading text -->
     <p class="hero-subtitle">
       Reserve your meeting space—view availability, book instantly, and manage your reservations.
     </p>
+    <!-- action buttons -->
     <div class="hero-buttons">
-      <a href="{% url 'reservations:room_list' %}"   class="btn btn-primary">View Rooms</a>
+      <!-- link to room list -->
+      <a href="{% url 'reservations:room_list' %}" class="btn btn-primary">View Rooms</a>
+      <!-- link to availability grid -->
       <a href="{% url 'reservations:room_status' %}" class="btn btn-success">Book a Room</a>
     </div>
   </section>

@@ -1,22 +1,35 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="container">
+  <!-- page heading -->
   <h1>Confirm Booking</h1>
+
+  <!-- show room details -->
   <p><strong>Room:</strong> {{ room.name }}</p>
   <p><strong>Capacity:</strong> {{ room.capacity }}</p>
   <p><strong>Description:</strong> {{ room.description }}</p>
+
+  <!-- show selected time slot -->
   <p>
     <strong>When:</strong>
     {{ start|date:"F j, Y" }} from {{ start|date:"H:i" }}
     to {{ end|date:"H:i" }}
   </p>
 
+  <!-- confirmation form posts to make_reservation view -->
   <form method="post" action="{% url 'reservations:make_reservation' room.id %}">
     {% csrf_token %}
+    <!-- hidden fields to carry start/end times -->
     <input type="hidden" name="start_time" value="{{ start|date:'Y-m-d\\TH:i' }}">
     <input type="hidden" name="end_time"   value="{{ end|date:'Y-m-d\\TH:i' }}">
-    <button type="submit">Confirm Booking</button>
-    <a href="{% url 'reservations:room_status' %}?date={{ start|date:'Y-m-d' }}">Cancel</a>
+
+    <!-- submit or cancel -->
+    <button class="btn btn-primary" type="submit">Confirm Booking</button>
+    <!-- cancel returns to availability on same date -->
+    <a class="btn btn-secondary" href="{% url 'reservations:room_status' %}?date={{ start|date:'Y-m-d' }}">
+      Cancel
+    </a>
   </form>
 </div>
 {% endblock %}

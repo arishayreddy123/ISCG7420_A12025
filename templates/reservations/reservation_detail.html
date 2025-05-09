@@ -2,12 +2,32 @@
 {% block title %}Reservation Details{% endblock %}
 
 {% block content %}
+  <!-- page heading -->
   <h2>Reservation Details</h2>
+
+  <!-- which room was booked -->
   <p><strong>Room:</strong> {{ res.room.name }}</p>
-  <p><strong>When:</strong> {{ res.start_time|date:"N j, Y, P" }} – {{ res.end_time|time:"P" }}</p>
-  <p><strong>Booked on:</strong> {{ res.booked_on|date:"N j, Y, P" }}</p>
+
+  <!-- date and time range -->
   <p>
-    <a class="button" href="{% url 'reservations:edit_reservation' res.pk %}?date={{ res.start_time|date:'Y-m-d' }}">Edit</a>
-    <a class="button" href="{% url 'reservations:cancel_reservation' res.pk %}">Cancel</a>
+    <strong>When:</strong>
+    {{ res.start_time|date:"N j, Y, P" }} – {{ res.end_time|time:"P" }}
+  </p>
+
+  <!-- timestamp when booking was made -->
+  <p><strong>Booked on:</strong> {{ res.booked_on|date:"N j, Y, P" }}</p>
+
+  <!-- action links to edit or cancel -->
+  <p>
+    <!-- edit link passes the reservation date so grid defaults to that day -->
+    <a class="btn btn-secondary btn-sm"
+       href="{% url 'reservations:edit_reservation' res.pk %}?date={{ res.start_time|date:'Y-m-d' }}">
+      Edit
+    </a>
+    <!-- cancel link goes to confirmation -->
+    <a class="btn btn-danger btn-sm"
+       href="{% url 'reservations:cancel_reservation' res.pk %}">
+      Cancel
+    </a>
   </p>
 {% endblock %}

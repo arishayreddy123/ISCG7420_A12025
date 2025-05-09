@@ -2,9 +2,14 @@
 {% block title %}Available Rooms{% endblock %}
 
 {% block content %}
+  <!-- full‑width room list -->
   <div class="room-list container-fluid">
+    <!-- page heading -->
     <h1>Available Rooms</h1>
+
+    <!-- rooms table -->
     <table>
+      <!-- table header -->
       <thead>
         <tr>
           <th>Room Name</th>
@@ -13,11 +18,16 @@
           <th>Action</th>
         </tr>
       </thead>
+
+      <!-- table body -->
       <tbody>
         {% for room in rooms %}
           <tr>
+            <!-- room name cell -->
             <td>{{ room.name }}</td>
+            <!-- capacity cell -->
             <td>{{ room.capacity }}</td>
+            <!-- description cell or placeholder -->
             <td class="description">
               {% if room.description %}
                 {{ room.description }}
@@ -25,14 +35,18 @@
                 <span style="color:#999;">—</span>
               {% endif %}
             </td>
+            <!-- action cell with booking link -->
             <td>
-              <a href="{% url 'reservations:make_reservation' room.id %}"
-                 class="btn btn-primary">
+              <a
+                href="{% url 'reservations:make_reservation' room.id %}"
+                class="btn btn-primary"
+              >
                 Book
               </a>
             </td>
           </tr>
         {% empty %}
+          <!-- shown when no rooms exist -->
           <tr>
             <td colspan="4" style="text-align:center; padding:2rem; color:#666;">
               No rooms available.

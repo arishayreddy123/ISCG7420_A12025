@@ -2,11 +2,23 @@
 {% block title %}Cancel Reservation{% endblock %}
 
 {% block content %}
+  <!-- page heading -->
   <h2>Cancel Reservation</h2>
-  <p>Are you sure you want to cancel your reservation for {{ res.room.name }} on {{ res.start_time|date:"N j, Y, P" }}?</p>
+
+  <!-- confirmation message with room and date -->
+  <p>
+    Are you sure you want to cancel your reservation for
+    {{ res.room.name }} on {{ res.start_time|date:"N j, Y, P" }}?
+  </p>
+
+  <!-- form to confirm or abort cancellation -->
   <form method="post">
     {% csrf_token %}
-    <button class="button alert">Yes, Cancel</button>
-    <a class="button" href="{% url 'reservations:my_reservations' %}">No, Go Back</a>
+    <!-- confirm button -->
+    <button class="btn btn-danger" type="submit">Yes, Cancel</button>
+    <!-- cancel link -->
+    <a class="btn btn-secondary" href="{% url 'reservations:my_reservations' %}">
+      No, Go Back
+    </a>
   </form>
 {% endblock %}

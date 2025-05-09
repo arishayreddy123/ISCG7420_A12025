@@ -2,25 +2,46 @@
 {% block title %}My Reservations{% endblock %}
 
 {% block content %}
+  <!-- page heading -->
   <h2>My Upcoming Reservations</h2>
+
+  <!-- table of user’s reservations -->
   <table class="table">
     <thead>
-      <tr><th>Room</th><th>Start</th><th>End</th><th>Actions</th></tr>
+      <tr>
+        <!-- column headers -->
+        <th>Room</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Actions</th>
+      </tr>
     </thead>
     <tbody>
       {% for res in reservations %}
         <tr>
+          <!-- room name -->
           <td>{{ res.room.name }}</td>
+          <!-- formatted start time -->
           <td>{{ res.start_time|date:"N j, Y, P" }}</td>
+          <!-- formatted end time -->
           <td>{{ res.end_time|date:"P" }}</td>
+          <!-- action links -->
           <td>
-            <a href="{% url 'reservations:reservation_detail' res.pk %}">View</a>
-            <a href="{% url 'reservations:edit_reservation' res.pk %}?date={{ res.start_time|date:'Y-m-d' }}">Edit</a>
-            <a href="{% url 'reservations:cancel_reservation' res.pk %}">Cancel</a>
+            <!-- view details -->
+            <a class="btn btn-secondary btn-sm" href="{% url 'reservations:reservation_detail' res.pk %}">View</a>
+            <!-- edit, passing date to grid -->
+            <a class="btn btn-primary btn-sm" href="{% url 'reservations:edit_reservation' res.pk %}?date={{ res.start_time|date:'Y-m-d' }}">Edit</a>
+            <!-- cancel reservation -->
+            <a class="btn btn-danger btn-sm" href="{% url 'reservations:cancel_reservation' res.pk %}">Cancel</a>
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="4">No upcoming reservations.</td></tr>
+        <!-- no reservations message -->
+        <tr>
+          <td colspan="4" style="text-align:center; color:#666;">
+            No upcoming reservations.
+          </td>
+        </tr>
       {% endfor %}
     </tbody>
   </table>

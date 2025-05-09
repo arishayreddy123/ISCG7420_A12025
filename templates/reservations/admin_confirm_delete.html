@@ -2,17 +2,27 @@
 {% block title %}Confirm Delete{% endblock %}
 
 {% block content %}
+  <!-- page heading -->
   <h2>Confirm Delete</h2>
+  <!-- show object to delete -->
   <p>Are you sure you want to delete “{{ obj }}”?</p>
+
+  <!-- delete form -->
   <form method="post">
-    {% csrf_token %}
-    <button class="button alert" type="submit">Yes, delete</button>
+    {% csrf_token %}  <!-- protect against CSRF -->
+    <!-- submit deletion -->
+    <button class="btn btn-danger" type="submit">Yes, delete</button>
+
+    <!-- cancel link varies by object type -->
     {% if type == 'room' %}
-      <a class="button" href="{% url 'reservations:admin_room_list' %}">No, back</a>
+      <!-- back to room list -->
+      <a class="btn btn-secondary" href="{% url 'reservations:admin_room_list' %}">No, back</a>
     {% elif type == 'reservation' %}
-      <a class="button" href="{% url 'reservations:admin_reservation_list' %}">No, back</a>
+      <!-- back to reservation list -->
+      <a class="btn btn-secondary" href="{% url 'reservations:admin_reservation_list' %}">No, back</a>
     {% else %}
-      <a class="button" href="{% url 'reservations:admin_user_list' %}">No, back</a>
+      <!-- back to user list -->
+      <a class="btn btn-secondary" href="{% url 'reservations:admin_user_list' %}">No, back</a>
     {% endif %}
   </form>
 {% endblock %}

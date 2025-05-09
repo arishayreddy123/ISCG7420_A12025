@@ -2,14 +2,24 @@
 {% block title %}Confirm Booking{% endblock %}
 
 {% block content %}
+  <!-- heading with room name -->
   <h2>Confirm Booking for {{ room.name }}</h2>
+
+  <!-- show selected time range -->
   <p>
     <strong>From:</strong> {{ start|date:"N j, Y, P" }}<br>
     <strong>To:</strong> {{ end|date:"P" }}
   </p>
-  <form method="post" action="{% url 'reservations:make_reservation' room.pk %}?start_time={{ start|date:'c' }}&end_time={{ end|date:'c' }}">
+
+  <!-- form posts to make_reservation with query params -->
+  <form method="post"
+        action="{% url 'reservations:make_reservation' room.pk %}?start_time={{ start|date:'c' }}&end_time={{ end|date:'c' }}">
     {% csrf_token %}
-    <button class="button">Confirm</button>
-    <a class="button" href="{% url 'reservations:room_status' %}">Cancel</a>
+    <!-- confirm button -->
+    <button class="btn btn-primary" type="submit">Confirm</button>
+    <!-- cancel link back to availability -->
+    <a class="btn btn-secondary" href="{% url 'reservations:room_status' %}?date={{ start|date:'Y-m-d' }}">
+      Cancel
+    </a>
   </form>
 {% endblock %}

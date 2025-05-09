@@ -2,41 +2,51 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
+  <!-- center card on page -->
   <div class="card" style="max-width:400px; margin:2rem auto; padding:1.5rem;">
+    <!-- form heading -->
     <h2 style="text-align:center; margin-bottom:1rem;">Create an Account</h2>
+    <!-- registration form -->
     <form method="post" novalidate>
       {% csrf_token %}
+      <!-- non‑field errors -->
       {{ form.non_field_errors }}
 
+      <!-- username field -->
       <div class="form-group">
         {{ form.username.label_tag }}
         {{ form.username }}
         {{ form.username.errors }}
       </div>
 
+      <!-- email field -->
       <div class="form-group">
         {{ form.email.label_tag }}
         {{ form.email }}
         {{ form.email.errors }}
       </div>
 
+      <!-- password field -->
       <div class="form-group">
         {{ form.password1.label_tag }}
         {{ form.password1 }}
         {{ form.password1.errors }}
       </div>
 
+      <!-- password confirmation -->
       <div class="form-group">
         {{ form.password2.label_tag }}
         {{ form.password2 }}
         {{ form.password2.errors }}
       </div>
 
+      <!-- submit button -->
       <div class="form-actions" style="text-align:center; margin-top:1rem;">
         <button type="submit" class="btn btn-primary">Register</button>
       </div>
     </form>
 
+    <!-- link to login page -->
     <p style="text-align:center; margin-top:1rem;">
       Already have an account? <a href="{% url 'login' %}">Log in</a>
     </p>
