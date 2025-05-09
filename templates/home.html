@@ -1,8 +1,16 @@
 {% extends "base.html" %}
+
+{% block title %}Conference Room Booking{% endblock %}
+
 {% block content %}
-  <h1>Welcome to the Conference Booking System</h1>
-  <p>
-    <a href="{% url 'reservations:register' %}">Register</a> or
-    <a href="{% url 'login' %}">Log in</a> to get started.
-  </p>
+  <section class="hero">
+    <h1 class="hero-title">Conference Room Booking</h1>
+    <p class="hero-subtitle">
+      Reserve your meeting space—view availability, book instantly, and manage your reservations.
+    </p>
+    <div class="hero-buttons">
+      <a href="{% url 'reservations:room_list' %}"   class="btn btn-primary">View Rooms</a>
+      <a href="{% url 'reservations:room_status' %}" class="btn btn-success">Book a Room</a>
+    </div>
+  </section>
 {% endblock %}

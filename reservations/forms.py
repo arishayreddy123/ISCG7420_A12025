@@ -1,30 +1,36 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Room, Reservation
 
-class ReservationForm(forms.ModelForm):
-    class Meta:
-        model = Reservation
-        fields = ['start_time', 'end_time']
+# ─── RegistrationForm for public signup ────────────────────────────────────────
+class RegistrationForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'placeholder': 'Email address'})
+    )
 
-class RegistrationForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
+        fields = ['username', 'email', 'password1', 'password2']
+        widgets = {
+            'username': forms.TextInput(attrs={'placeholder': 'Username'}),
+        }
 
+# ─── RoomForm for admin room create/edit ──────────────────────────────────────
 class RoomForm(forms.ModelForm):
     class Meta:
         model = Room
         fields = ['name', 'capacity', 'description']
 
-class ReservationAdminForm(forms.ModelForm):
+# ─── ReservationForm for booking ──────────────────────────────────────────────
+class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
-        fields = ['user', 'room', 'start_time', 'end_time']
+        fields = ['room', 'user', 'start_time', 'end_time']
 
+# ─── UserForm for admin editing existing users ───────────────────────────────
 class UserForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput, required=False)
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'is_staff', 'is_active']
+        fields = ['username', 'email', 'is_staff', 'is_active']

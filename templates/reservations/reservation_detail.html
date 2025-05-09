@@ -1,18 +1,13 @@
 {% extends "base.html" %}
+{% block title %}Reservation Details{% endblock %}
+
 {% block content %}
-<div class="container">
-  <h1>Reservation Details</h1>
+  <h2>Reservation Details</h2>
   <p><strong>Room:</strong> {{ res.room.name }}</p>
-  <p><strong>When:</strong>
-     {{ res.start_time|date:"M j, Y H:i" }}
-     – {{ res.end_time|date:"H:i" }}
-  </p>
+  <p><strong>When:</strong> {{ res.start_time|date:"N j, Y, P" }} – {{ res.end_time|time:"P" }}</p>
+  <p><strong>Booked on:</strong> {{ res.booked_on|date:"N j, Y, P" }}</p>
   <p>
-    <a href="{% url 'reservations:edit_reservation' res.id %}">Edit</a>
-    |
-    <a href="{% url 'reservations:cancel_reservation' res.id %}">Cancel</a>
-    |
-    <a href="{% url 'reservations:my_reservations' %}">Back to My Reservations</a>
+    <a class="button" href="{% url 'reservations:edit_reservation' res.pk %}?date={{ res.start_time|date:'Y-m-d' }}">Edit</a>
+    <a class="button" href="{% url 'reservations:cancel_reservation' res.pk %}">Cancel</a>
   </p>
-</div>
 {% endblock %}

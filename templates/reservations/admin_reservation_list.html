@@ -1,19 +1,26 @@
 {% extends "base.html" %}
+{% block title %}Manage Reservations{% endblock %}
+
 {% block content %}
-<h1>All Reservations</h1>
-<a href="{% url 'reservations:admin_reservation_add' %}">New</a>
-<table>
-  <tr><th>User</th><th>Room</th><th>When</th><th></th></tr>
-  {% for r in reservations %}
-    <tr>
-      <td>{{ r.user.username }}</td>
-      <td>{{ r.room.name }}</td>
-      <td>{{ r.start_time }}–{{ r.end_time }}</td>
-      <td>
-        <a href="{% url 'reservations:admin_reservation_edit' r.pk %}">Edit</a>
-        <a href="{% url 'reservations:admin_reservation_delete' r.pk %}">Del</a>
-      </td>
-    </tr>
-  {% endfor %}
-</table>
+  <h2>Manage Reservations</h2>
+  <p><a class="button primary" href="{% url 'reservations:admin_reservation_add' %}">Add Reservation</a></p>
+  <table class="table">
+    <thead><tr><th>Room</th><th>User</th><th>Start</th><th>End</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for res in reservations %}
+        <tr>
+          <td>{{ res.room.name }}</td>
+          <td>{{ res.user.username }}</td>
+          <td>{{ res.start_time|date:"N j, Y, P" }}</td>
+          <td>{{ res.end_time|time:"P" }}</td>
+          <td>
+            <a href="{% url 'reservations:admin_reservation_edit' res.pk %}">Edit</a>
+            <a href="{% url 'reservations:admin_reservation_delete' res.pk %}">Delete</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">No reservations.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}

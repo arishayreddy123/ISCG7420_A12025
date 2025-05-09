@@ -1,9 +1,14 @@
 {% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
 {% block content %}
-<h1>Room form</h1>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button>Save</button>
-</form>
+  <h2>{{ title }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="actions">
+      <button class="button primary" type="submit">Save</button>
+      <a class="button" href="{% url 'reservations:admin_room_list' %}">Cancel</a>
+    </div>
+  </form>
 {% endblock %}

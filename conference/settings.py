@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'reservations.apps.ReservationsConfig',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -74,12 +75,15 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [ BASE_DIR / 'static' ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+
+
 # Email (console for dev)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Auth redirects
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'reservations:home'
+LOGOUT_REDIRECT_URL = 'reservations:home'
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

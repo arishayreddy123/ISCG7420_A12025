@@ -1,14 +1,45 @@
 {% extends "base.html" %}
+{% block title %}Available Rooms{% endblock %}
+
 {% block content %}
-  <h1>All Rooms</h1>
-  <ul>
-    {% for room in rooms %}
-      <li>
-        <strong>{{ room.name }}</strong> – cap {{ room.capacity }}<br>
-        {{ room.description }}
-      </li>
-    {% empty %}
-      <li>No rooms yet.</li>
-    {% endfor %}
-  </ul>
+  <div class="room-list container-fluid">
+    <h1>Available Rooms</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Room Name</th>
+          <th>Capacity</th>
+          <th>Description</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for room in rooms %}
+          <tr>
+            <td>{{ room.name }}</td>
+            <td>{{ room.capacity }}</td>
+            <td class="description">
+              {% if room.description %}
+                {{ room.description }}
+              {% else %}
+                <span style="color:#999;">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'reservations:make_reservation' room.id %}"
+                 class="btn btn-primary">
+                Book
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center; padding:2rem; color:#666;">
+              No rooms available.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

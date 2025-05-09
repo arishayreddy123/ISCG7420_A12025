@@ -1,31 +1,29 @@
 {% extends "base.html" %}
+{% block title %}Edit Reservation{% endblock %}
+
 {% block content %}
-  <h1>Edit Reservation for {{ room.name }}</h1>
-
-  <!-- date picker GET -->
-  <form method="get" style="margin-bottom:1em">
-    <label for="id_date">Choose date:</label>
-    <input
-      type="date"
-      id="id_date"
-      name="date"
-      value="{{ chosen_date|date:'Y-m-d' }}"
-      min="{{ min_date }}"
-    >
-    <button type="submit">Show Slots</button>
-  </form>
-
-  <!-- time slot POST -->
+  <h2>Edit Reservation for {{ res.room.name }}</h2>
+  <div class="field">
+    <label for="date">Select date:</label>
+    <input type="date" id="date" name="date" value="{{ sel_date }}" min="{{ min_date }}"
+           onchange="location='?date='+this.value">
+  </div>
   <form method="post">
     {% csrf_token %}
-    <div>
-      <label>Time slot on {{ chosen_date|date:"M j, Y" }}:</label><br>
-      {{ form.time_slot }}
-      {% if form.time_slot.errors %}
-        <div class="error">{{ form.time_slot.errors }}</div>
-      {% endif %}
+    <label>Choose time slot:</label>
+    <select name="time_slot">
+      {% for slot in slots %}
+        {% if slot.free or slot.start == res.start_time %}
+          <option value="{{ slot.start|date:'c' }}|{{ slot.end|date:'c' }}"
+                  {% if slot.start == res.start_time %}selected{% endif %}>
+            {{ slot.start|time:"H:i" }}–{{ slot.end|time:"H:i" }}
+          </option>
+        {% endif %}
+      {% endfor %}
+    </select>
+    <div class="actions">
+      <button class="button primary">Save</button>
+      <a class="button" href="{% url 'reservations:my_reservations' %}">Cancel</a>
     </div>
-    <button type="submit">Save</button>
-    <a href="{% url 'reservations:my_reservations' %}">Cancel</a>
   </form>
 {% endblock %}

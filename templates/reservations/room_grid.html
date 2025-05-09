@@ -1,50 +1,57 @@
 {% extends "base.html" %}
+{% block title %}Room Availability{% endblock %}
+
 {% block content %}
-  <h1>Book a Room</h1>
+  <div class="availability container">
+    <div class="controls">
+      <h1>Room Availability</h1>
+      <form method="get">
+        <label for="date">Date:</label>
+        <input
+          type="date"
+          id="date"
+          name="date"
+          value="{{ sel_date }}"
+          min="{{ min_date }}"
+        >
+        <button type="submit" class="btn btn-primary">Go</button>
+      </form>
+    </div>
 
-  <form method="get" class="mb-4">
-    <label for="date">Select date:</label>
-    <input
-      type="date"
-      id="date"
-      name="date"
-      value="{{ sel_date|date:'Y-m-d' }}"
-      min="{{ min_date }}"
-      class="form-control"
-    />
-    <button type="submit" class="btn btn-primary mt-2">Go</button>
-  </form>
-
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>Room ↓ Time →</th>
-        {% for start,end in slots %}
-          <th>{{ start|time:"H:i" }}–{{ end|time:"H:i" }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in grid %}
-        <tr>
-          <td><strong>{{ row.room.name }}</strong></td>
-          {% for cell in row.cells %}
-            <td>
-              {% if cell.free %}
-                <a
-                  href="{% url 'reservations:confirm_reservation' row.room.pk %}?start_time={{ cell.start|date:'c' }}&end_time={{ cell.end|date:'c' }}"
-                  class="btn btn-sm btn-outline-success"
-                  style="white-space: nowrap;"
-                >
-                  {{ cell.start|time:"H:i" }}
-                </a>
-              {% else %}
-                <span class="text-danger">Booked</span>
-              {% endif %}
-            </td>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Room</th>
+            {% for slot in slots %}
+              <th>{{ slot.0|time:"H:i" }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in grid %}
+            <tr>
+              <td class="room-name">{{ row.room.name }}</td>
+              {% for cell in row.cells %}
+                {% if cell.free %}
+                  <td class="free">
+                    <a href="{% url 'reservations:confirm_reservation' row.room.pk %}?start_time={{ cell.start|date:'c' }}&end_time={{ cell.end|date:'c' }}">
+                      Book
+                    </a>
+                  </td>
+                {% else %}
+                  <td class="booked">×</td>
+                {% endif %}
+              {% endfor %}
+            </tr>
           {% endfor %}
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="legend">
+      <span><span class="box free-box"></span> Free</span>
+      <span><span class="box booked-box"></span> Booked</span>
+    </div>
+  </div>
 {% endblock %}

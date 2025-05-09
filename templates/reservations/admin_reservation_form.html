@@ -1,9 +1,45 @@
 {% extends "base.html" %}
+{% load static %}
+{% block title %}
+  {% if editing %}Edit Reservation{% else %}New Reservation{% endif %}
+{% endblock %}
+
 {% block content %}
-<h1>Reservation form</h1>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button>Save</button>
-</form>
+  <h1>
+    {% if editing %}Editing Reservation #{{ editing.id }}{% else %}Create New Reservation{% endif %}
+  </h1>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.room.label_tag }}<br>
+      {{ form.room }}
+    </div>
+    <div class="mb-3">
+      {{ form.user.label_tag }}<br>
+      {{ form.user }}
+    </div>
+
+    <label>Time slot on {{ sel_date|date:"F j, Y" }}:</label>
+    <select name="time_slot">
+      {% for slot in slots %}
+        {% if slot.free %}
+          <option value="{{ slot.start|date:'c' }}|{{ slot.end|date:'c' }}">
+            {{ slot.start|time:"H:i" }}–{{ slot.end|time:"H:i" }}
+          </option>
+        {% elif editing and slot.start == editing.start_time %}
+          <option value="{{ slot.start|date:'c' }}|{{ slot.end|date:'c' }}" selected>
+            {{ slot.start|time:"H:i" }}–{{ slot.end|time:"H:i" }}
+          </option>
+        {% endif %}
+      {% endfor %}
+    </select>
+
+    <div class="actions" style="margin-top:1rem;">
+      <button type="submit" class="btn btn-primary">
+        {% if editing %}Save Changes{% else %}Create Reservation{% endif %}
+      </button>
+      <a class="btn btn-secondary" href="{% url 'reservations:admin_reservation_list' %}">Cancel</a>
+    </div>
+  </form>
 {% endblock %}
