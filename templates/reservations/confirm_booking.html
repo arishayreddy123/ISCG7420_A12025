@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Confirm Booking</h1>
+
+  <p>
+    Room: <strong>{{ room.name }}</strong><br>
+    When: <strong>{{ start|date:"F j, Y, H:i" }} – {{ end|date:"H:i" }}</strong>
+  </p>
+
+  <form method="post" action="{% url 'reservations:make_reservation' room.id %}?start_time={{ start|date:"c" }}&end_time={{ end|date:"c" }}">
+    {% csrf_token %}
+    <button type="submit">Book</button>
+    <a href="{% url 'reservations:room_status' %}?date={{ start.date|date:"Y-m-d" }}">Cancel</a>
+  </form>
+{% endblock %}
