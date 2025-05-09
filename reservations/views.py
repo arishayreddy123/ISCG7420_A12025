@@ -36,12 +36,13 @@ def room_list(request):
 def room_status(request):
     raw = request.GET.get('date')
     sel_date = datetime.fromisoformat(raw).date() if raw else date.today()
+    min_date = date.today().isoformat()
 
     # build hourly slots from 09:00 to 17:00
     slots = []
     for hour in range(9, 17):
         start = datetime.combine(sel_date, datetime.min.time()) + timedelta(hours=hour)
-        end = start + timedelta(hours=1)
+        end   = start + timedelta(hours=1)
         slots.append((start, end))
 
     # build grid of rooms × slots
@@ -58,7 +59,10 @@ def room_status(request):
         grid.append({'room': room, 'cells': cells})
 
     return render(request, 'reservations/room_grid.html', {
-        'grid': grid, 'slots': slots, 'sel_date': sel_date
+        'grid': grid,
+        'slots': slots,
+        'sel_date': sel_date,
+        'min_date': min_date,
     })
 
 @login_required
@@ -76,17 +80,16 @@ def make_reservation(request, room_id):
     start = datetime.fromisoformat(request.GET['start_time'])
     end   = datetime.fromisoformat(request.GET['end_time'])
 
-    # avoid double‑booking
     if Reservation.objects.filter(room=room, start_time__lt=end, end_time__gt=start).exists():
         messages.error(request, 'Already booked')
         return redirect('reservations:room_status')
 
+    # drop booked_on, your model doesn't accept it
     Reservation.objects.create(
         room=room,
         user=request.user,
         start_time=start,
         end_time=end,
-        booked_on=timezone.now()
     )
     messages.success(request, 'Successfully booked')
     return redirect('reservations:my_reservations')
@@ -109,25 +112,20 @@ def edit_reservation(request, res_id):
     res = get_object_or_404(Reservation, pk=res_id, user=request.user)
     if request.method == 'POST':
         st, en = request.POST['time_slot'].split('|')
-        start = datetime.fromisoformat(st)
-        end   = datetime.fromisoformat(en)
-        # avoid double‑booking (exclude self)
-        qs = Reservation.objects.filter(
+        start, end = datetime.fromisoformat(st), datetime.fromisoformat(en)
+        conflict = Reservation.objects.filter(
             room=res.room, start_time__lt=end, end_time__gt=start
-        ).exclude(pk=res.pk)
-        if qs.exists():
+        ).exclude(pk=res.pk).exists()
+        if conflict:
             messages.error(request, 'Slot not free')
         else:
-            res.start_time = start
-            res.end_time   = end
+            res.start_time, res.end_time = start, end
             res.save()
             messages.success(request, 'Reservation updated')
             return redirect('reservations:my_reservations')
 
-    # GET: prepare slots around original or selected date
-    sel = request.GET.get('date')
-    sel_date = datetime.fromisoformat(sel).date() if sel else res.start_time.date()
-
+    raw = request.GET.get('date')
+    sel_date = datetime.fromisoformat(raw).date() if raw else res.start_time.date()
     slots = []
     for hour in range(9, 17):
         s = datetime.combine(sel_date, datetime.min.time()) + timedelta(hours=hour)
@@ -186,7 +184,6 @@ def admin_room_delete(request, pk):
         return redirect('reservations:admin_room_list')
     return render(request, 'reservations/admin_confirm_delete.html', {'obj': room, 'type': 'room'})
 
-
 @staff_member_required
 def admin_reservation_list(request):
     reservations = Reservation.objects.select_related('room','user').all()
@@ -194,48 +191,30 @@ def admin_reservation_list(request):
 
 @staff_member_required
 def admin_reservation_add(request):
-    # -- new: disallow past dates --
     today = date.today()
     raw = request.GET.get('date')
     sel_date = date.fromisoformat(raw) if raw else today
 
-    # build slots for that date, checking double‑book if room selected
     slots = []
-    selected_room = None
-    if request.GET.get('room'):
-        try:
-            selected_room = Room.objects.get(pk=request.GET['room'])
-        except Room.DoesNotExist:
-            selected_room = None
-
+    sel_room = Room.objects.filter(pk=request.GET.get('room')).first() if request.GET.get('room') else None
     for hour in range(9, 17):
         s = datetime.combine(sel_date, datetime.min.time()) + timedelta(hours=hour)
         e = s + timedelta(hours=1)
-        if selected_room:
-            booked = Reservation.objects.filter(
-                room=selected_room, start_time__lt=e, end_time__gt=s
-            ).exists()
-        else:
-            booked = False
-        slots.append({'start': s, 'end': e, 'free': not booked})
+        busy = Reservation.objects.filter(room=sel_room, start_time__lt=e, end_time__gt=s).exists() if sel_room else False
+        slots.append({'start': s, 'end': e, 'free': not busy})
 
     form = ReservationForm(request.POST or None)
     if request.method == 'POST' and 'time_slot' in request.POST:
         st, en = request.POST['time_slot'].split('|')
         room = get_object_or_404(Room, pk=request.POST['room'])
         user = get_object_or_404(User, pk=request.POST['user'])
-        # final double‑book guard
-        if Reservation.objects.filter(room=room,
-                                      start_time__lt=en,
-                                      end_time__gt=st).exists():
+        if Reservation.objects.filter(room=room, start_time__lt=en, end_time__gt=st).exists():
             messages.error(request, 'That slot is already taken.')
         else:
             Reservation.objects.create(
-                room=room,
-                user=user,
+                room=room, user=user,
                 start_time=datetime.fromisoformat(st),
                 end_time=datetime.fromisoformat(en),
-                booked_on=timezone.now()
             )
             messages.success(request, 'Reservation added')
             return redirect('reservations:admin_reservation_list')
@@ -251,7 +230,6 @@ def admin_reservation_add(request):
 @staff_member_required
 def admin_reservation_edit(request, pk):
     res = get_object_or_404(Reservation, pk=pk)
-
     raw = request.GET.get('date')
     sel_date = date.fromisoformat(raw) if raw else res.start_time.date()
 
@@ -279,7 +257,7 @@ def admin_reservation_edit(request, pk):
         'slots': slots,
         'sel_date': sel_date,
         'editing': res,
-        'min_date': None,   # not used in edit
+        'min_date': None,
     })
 
 @staff_member_required
@@ -290,7 +268,6 @@ def admin_reservation_delete(request, pk):
         messages.success(request,'Reservation deleted')
         return redirect('reservations:admin_reservation_list')
     return render(request, 'reservations/admin_confirm_delete.html', {'obj': res, 'type': 'reservation'})
-
 
 @staff_member_required
 def admin_user_list(request):
